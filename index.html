@@ -6,49 +6,150 @@
   <title>Songtaew route helper — Pattaya</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha512-sA+e2X0p6b8Nw1VYQ6c3lq1s2gqgkK4Z5D9rI1q9XWq2e9Jx5x1f2u7Y9Y+1Z0rQ4X9t3Y1m/3z2w==" crossorigin=""/>
   <style>
-    html,body,#map{ height:100%; margin:0; padding:0; }
-    #panel{ position:absolute; top:10px; left:10px; z-index:1000; background:#fff; padding:10px; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,0.2); font-family:Arial, sans-serif; }
-    #panel h3{ margin:0 0 6px 0; }
-    #routesLegend{ max-height:120px; overflow:auto; margin-top:6px; }
-    button{ margin-right:6px; }
+    html, body, #map { 
+      height: 100%; 
+      margin: 0; 
+      padding: 0; 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    #panel { 
+      position: absolute; 
+      top: 10px; 
+      right: 10px; 
+      z-index: 1000; 
+      background: rgba(255, 255, 255, 0.95); 
+      padding: 12px; 
+      border-radius: 10px; 
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2); 
+      max-width: 300px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+    #panel h3 { 
+      margin: 0 0 8px 0; 
+      color: #2c3e50;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    #routesLegend { 
+      max-height: 120px; 
+      overflow-y: auto; 
+      margin-top: 8px; 
+      padding-top: 6px;
+      border-top: 1px solid rgba(0,0,0,0.08);
+    }
+    #routesLegend > div {
+      margin-bottom: 3px;
+      font-size: 11px;
+      line-height: 1.3;
+    }
+    button { 
+      margin: 2px 4px 2px 0; 
+      padding: 5px 10px; 
+      border: none; 
+      border-radius: 6px; 
+      background: #3498db; 
+      color: white; 
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s ease;
+    }
+    button:hover { 
+      background: #2980b9; 
+      transform: translateY(-1px);
+    }
+    #resetBtn { 
+      background: #e74c3c; 
+    }
+    #resetBtn:hover { 
+      background: #c0392b; 
+    }
+    #info { 
+      margin-top: 8px; 
+      font-size: 12px; 
+      line-height: 1.4;
+      min-height: 36px;
+      color: #34495e;
+    }
+    .legend-color {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-right: 6px;
+      border-radius: 2px;
+      vertical-align: middle;
+    }
+    .instructions {
+      font-size: 12px;
+      line-height: 1.4;
+      margin-bottom: 8px;
+      color: #555;
+    }
+    .legend-title {
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 8px;
+      margin-bottom: 4px;
+      color: #2c3e50;
+    }
+    
+    /* Мобильная адаптация */
+    @media (max-width: 480px) {
+      #panel {
+        max-width: calc(100% - 20px);
+        right: 10px;
+        left: 10px;
+        top: 10px;
+      }
+      button {
+        padding: 4px 8px;
+        font-size: 11px;
+      }
+    }
   </style>
 </head>
 <body>
-<div id="panel">
-  <h3>Songtaew route helper — Паттайя</h3>
-  <div>Кликни на карту: первый клик — <b>где ты</b>, второй — <b>куда хочешь</b>.</div>
-  <div style="margin-top:6px;">
-    <button id="resetBtn">Сбросить</button>
-    <button id="fitBtn">Показать всё</button>
-  </div>
-  <div id="info" style="margin-top:8px;font-size:13px"></div>
-  <div id="routesLegend"></div>
-  <div style="margin-top:6px;font-size:12px;color:#555">Алгоритм: выбирается маршрут с минимальной суммой пешеходных участков до/от маршрута. Затем рисуется пешеходный путь к началу маршрута, отрезок маршрута и пешком до точки назначения.</div>
-</div>
 <div id="map"></div>
+
+<div id="panel">
+  <h3>🚌 Songtaew Helper — Паттайя</h3>
+  <div class="instructions">Кликните на карту:<br>1️⃣ — где вы находитесь<br>2️⃣ — куда хотите попасть</div>
+  
+  <div>
+    <button id="resetBtn">🔄 Сбросить</button>
+    <button id="fitBtn">🗺️ Все маршруты</button>
+  </div>
+  
+  <div id="info">Кликните на карту, чтобы начать</div>
+  
+  <div class="legend-title">Доступные маршруты:</div>
+  <div id="routesLegend"></div>
+</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
 <script>
 // --- Инициализация карты ---
-const map = L.map('map').setView([12.9236, 100.8825], 13); // Pattaya
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ maxZoom:19, attribution:'© OpenStreetMap contributors' }).addTo(map);
+const map = L.map('map').setView([12.9236, 100.8825], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19, 
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
 
-// --- Примерные маршруты сонгтео в Паттайе (упрощённые полилинии) ---
-// Координаты в формате [lng, lat] для удобства работы с turf (geojson: [lon, lat])
+// --- Маршруты сонгтео в Паттайе ---
 const ROUTES = [
   {
     id: 'beach-loop',
-    name: 'Beach Road — Second Road (Центр)',
+    name: 'Beach Road — Second Road',
     color: '#1f78b4',
     coords: [
-      [100.8790,12.9391], // north Dolphin area
+      [100.8790,12.9391],
       [100.8810,12.9345],
       [100.8830,12.9280],
       [100.8835,12.9200],
       [100.8840,12.9140],
       [100.8828,12.9085],
-      [100.8800,12.9028], // near walking street
+      [100.8800,12.9028],
       [100.8790,12.8950],
       [100.8785,12.9010],
       [100.8765,12.9090],
@@ -60,7 +161,7 @@ const ROUTES = [
   },
   {
     id: 'naklua',
-    name: 'Dolphin → Naklua (Наклуа)',
+    name: 'Dolphin → Naklua',
     color: '#33a02c',
     coords: [
       [100.8790,12.9391],
@@ -72,7 +173,7 @@ const ROUTES = [
   },
   {
     id: 'jomtien',
-    name: 'Thappraya → Jomtien (Джомтьен)',
+    name: 'Thappraya → Jomtien',
     color: '#e31a1c',
     coords: [
       [100.8830,12.9280],
@@ -84,7 +185,7 @@ const ROUTES = [
   },
   {
     id: 'sukhumvit',
-    name: 'Dolphin → Terminal 21 → Sukhumvit',
+    name: 'Dolphin → Terminal 21',
     color: '#ff7f00',
     coords: [
       [100.8790,12.9391],
@@ -95,43 +196,70 @@ const ROUTES = [
   }
 ];
 
-// Добавим визуализацию маршрутов
+// Визуализация маршрутов
 const routesLayerGroup = L.layerGroup().addTo(map);
 ROUTES.forEach(r => {
   const latlngs = r.coords.map(c => [c[1], c[0]]);
-  r._poly = L.polyline(latlngs, {color: r.color, weight:4, opacity:0.7}).addTo(routesLayerGroup);
+  r._poly = L.polyline(latlngs, {color: r.color, weight: 4, opacity: 0.8}).addTo(routesLayerGroup);
 });
 
-// Легенда
+// Легенда маршрутов
 const legend = document.getElementById('routesLegend');
 ROUTES.forEach(r => {
-  const el = document.createElement('div');
-  el.innerHTML = `<span style="display:inline-block;width:12px;height:12px;background:${r.color};margin-right:6px;border-radius:3px;"></span>${r.name}`;
-  legend.appendChild(el);
+  const div = document.createElement('div');
+  div.innerHTML = `<span class="legend-color" style="background:${r.color};"></span>${r.name}`;
+  legend.appendChild(div);
 });
 
-// --- Взаимодействие: клики для постановки маркеров ---
+// Взаимодействие с картой
 let origin = null, dest = null;
-let originMarker=null, destMarker=null;
+let originMarker = null, destMarker = null;
 let resultLayers = L.layerGroup().addTo(map);
 
 map.on('click', e => {
   if (!origin) {
+    // Очистка предыдущих данных
+    if (originMarker) map.removeLayer(originMarker);
+    if (destMarker) map.removeLayer(destMarker);
+    resultLayers.clearLayers();
+    ROUTES.forEach(r => r._poly.setStyle({weight: 4, opacity: 0.8}));
+    
     origin = [e.latlng.lng, e.latlng.lat];
-    originMarker = L.marker([origin[1], origin[0]], {title:'Origin'}).addTo(map).bindPopup('Отсюда (origin)').openPopup();
-    updateInfo('Отметил местоположение. Теперь кликни, куда хочешь попасть.');
+    originMarker = L.marker([origin[1], origin[0]], {
+      title: 'Ваше местоположение',
+      draggable: true
+    }).addTo(map).bindPopup('📍 Отсюда').openPopup();
+    
+    updateInfo('✅ Местоположение отмечено<br>Теперь укажите место назначения');
+    
+    originMarker.on('dragend', () => {
+      origin = [originMarker.getLatLng().lng, originMarker.getLatLng().lat];
+      if (dest) computeBestRoute();
+    });
+    
   } else if (!dest) {
     dest = [e.latlng.lng, e.latlng.lat];
-    destMarker = L.marker([dest[1], dest[0]], {title:'Destination'}).addTo(map).bindPopup('Сюда (destination)').openPopup();
-    updateInfo('Отмечено место назначения. Ищу подходящий маршрут...');
+    destMarker = L.marker([dest[1], dest[0]], {
+      title: 'Место назначения',
+      draggable: true
+    }).addTo(map).bindPopup('🎯 Сюда').openPopup();
+    
+    updateInfo('✅ Место назначения отмечено<br>Вычисление маршрута...');
     computeBestRoute();
+    
+    destMarker.on('dragend', () => {
+      dest = [destMarker.getLatLng().lng, destMarker.getLatLng().lat];
+      if (origin) computeBestRoute();
+    });
   }
 });
 
-function updateInfo(text){ document.getElementById('info').innerText = text; }
+function updateInfo(text) {
+  document.getElementById('info').innerHTML = text;
+}
 
-// --- Логика выбора маршрута ---
-function computeBestRoute(){
+// Основная логика маршрутизации
+function computeBestRoute() {
   resultLayers.clearLayers();
   if (!origin || !dest) return;
 
@@ -140,83 +268,115 @@ function computeBestRoute(){
 
   const candidates = ROUTES.map(route => {
     const line = turf.lineString(route.coords);
-    const nearestToOrigin = turf.nearestPointOnLine(line, originPt, {units:'kilometers'});
-    const nearestToDest = turf.nearestPointOnLine(line, destPt, {units:'kilometers'});
+    
+    try {
+      const nearestToOrigin = turf.nearestPointOnLine(line, originPt, {units: 'kilometers'});
+      const nearestToDest = turf.nearestPointOnLine(line, destPt, {units: 'kilometers'});
 
-    // slice segment along route between these two points
-    const p1 = nearestToOrigin.geometry.coordinates;
-    const p2 = nearestToDest.geometry.coordinates;
-    const slice = turf.lineSlice(turf.point(p1), turf.point(p2), line);
-    const routeSegmentLen = turf.length(slice, {units:'kilometers'});
+      const p1 = nearestToOrigin.geometry.coordinates;
+      const p2 = nearestToDest.geometry.coordinates;
+      
+      if (!p1 || !p2) throw new Error('Invalid coordinates');
 
-    const walkStart = turf.distance(originPt, turf.point(p1), {units:'kilometers'});
-    const walkEnd = turf.distance(destPt, turf.point(p2), {units:'kilometers'});
+      let slice, routeSegmentLen = 0;
+      try {
+        slice = turf.lineSlice(turf.point(p1), turf.point(p2), line);
+        routeSegmentLen = turf.length(slice, {units: 'kilometers'});
+      } catch (error) {
+        routeSegmentLen = turf.distance(turf.point(p1), turf.point(p2), {units: 'kilometers'});
+        slice = null;
+      }
 
-    // score: минимизируем суммарную пешую дистанцию, потом длину сегмента
-    const score = walkStart + walkEnd + routeSegmentLen*0.001; // малый вес для маршрута
+      const walkStart = turf.distance(originPt, turf.point(p1), {units: 'kilometers'});
+      const walkEnd = turf.distance(destPt, turf.point(p2), {units: 'kilometers'});
+      const score = walkStart + walkEnd + routeSegmentLen * 0.001;
 
-    return {
-      route, line, nearestToOrigin, nearestToDest, routeSegmentLen, walkStart, walkEnd, score, slice
-    };
+      return { route, nearestToOrigin, nearestToDest, routeSegmentLen, walkStart, walkEnd, score, slice, valid: true };
+    } catch (error) {
+      return { route, score: Infinity, valid: false };
+    }
   });
 
-  candidates.sort((a,b)=> a.score - b.score);
-  const best = candidates[0];
-
-  // Отображаем выбранный маршрут и пути
-  showResult(best);
-}
-
-function showResult(best){
-  const r = best.route;
-  updateInfo(`Выбран маршрут: ${r.name}. Пешком к маршруту: ${(best.walkStart*1000).toFixed(0)} м, от маршрута до цели пешком: ${(best.walkEnd*1000).toFixed(0)} м. Длина участка по маршруту: ${(best.routeSegmentLen*1000).toFixed(0)} м.`);
-
-  // Пешком от origin до nearestToOrigin
-  const pStart = best.nearestToOrigin.geometry.coordinates; // [lng,lat]
-  const pEnd = best.nearestToDest.geometry.coordinates;
-
-  const walkTo = L.polyline([[origin[1],origin[0]],[pStart[1],pStart[0]]], {dashArray:'5,8', weight:3}).addTo(resultLayers);
-  const walkFrom = L.polyline([[pEnd[1],pEnd[0]],[dest[1],dest[0]]], {dashArray:'5,8', weight:3}).addTo(resultLayers);
-
-  // Полоска маршрута — точный отрезок между pStart и pEnd по линии маршрута
-  // В leaflet у нас есть route._poly; но возьмём GeoJSON сегмент best.slice
-  if (best.slice && best.slice.geometry && best.slice.geometry.coordinates.length>0) {
-    const segLatLngs = best.slice.geometry.coordinates.map(c=>[c[1],c[0]]);
-    L.polyline(segLatLngs, {color:r.color, weight:6}).addTo(resultLayers);
-  } else {
-    // fallback: нарисовать участок от pStart до pEnd прямой линией вдоль маршрута
-    L.polyline([[pStart[1],pStart[0]],[pEnd[1],pEnd[0]]], {color:r.color, weight:6}).addTo(resultLayers);
+  const validCandidates = candidates.filter(c => c.valid);
+  if (validCandidates.length === 0) {
+    updateInfo('❌ Не удалось найти маршрут<br>Попробуйте другие точки');
+    return;
   }
 
-  // Покажем точки посадки/высадки
-  L.circleMarker([pStart[1],pStart[0]], {radius:6, fill:true}).addTo(resultLayers).bindPopup('Садиться сюда');
-  L.circleMarker([pEnd[1],pEnd[0]], {radius:6, fill:true}).addTo(resultLayers).bindPopup('Выходить здесь');
-
-  // Немного визуального указания: выделим весь маршрут
-  best.route._poly.setStyle({weight:3, opacity:0.25});
-
-  // Рамка под результат
-  map.fitBounds(resultLayers.getBounds().pad(1.1));
+  validCandidates.sort((a, b) => a.score - b.score);
+  showResult(validCandidates[0]);
 }
 
-// --- Кнопки ---
-document.getElementById('resetBtn').addEventListener('click', ()=>{
-  origin=null; dest=null;
+function showResult(best) {
+  const r = best.route;
+  const walkStartM = Math.round(best.walkStart * 1000);
+  const walkEndM = Math.round(best.walkEnd * 1000);
+  const routeM = Math.round(best.routeSegmentLen * 1000);
+  
+  updateInfo(
+    `✅ Маршрут: <b>${r.name}</b><br>` +
+    `🚶 ${walkStartM}м → 🚌 ${routeM}м → 🚶 ${walkEndM}м`
+  );
+
+  const pStart = best.nearestToOrigin.geometry.coordinates;
+  const pEnd = best.nearestToDest.geometry.coordinates;
+
+  // Пешеходные участки
+  if (origin && pStart) {
+    L.polyline([[origin[1], origin[0]], [pStart[1], pStart[0]]], 
+      {color: '#666', dashArray: '5,5', weight: 2.5, opacity: 0.8}
+    ).addTo(resultLayers);
+  }
+  if (dest && pEnd) {
+    L.polyline([[pEnd[1], pEnd[0]], [dest[1], dest[0]]], 
+      {color: '#666', dashArray: '5,5', weight: 2.5, opacity: 0.8}
+    ).addTo(resultLayers);
+  }
+
+  // Маршрутный сегмент
+  if (best.slice?.geometry?.coordinates?.length > 1) {
+    const segLatLngs = best.slice.geometry.coordinates.map(c => [c[1], c[0]]);
+    L.polyline(segLatLngs, {color: r.color, weight: 5, opacity: 1}).addTo(resultLayers);
+  } else {
+    L.polyline([[pStart[1], pStart[0]], [pEnd[1], pEnd[0]]], 
+      {color: r.color, weight: 5, opacity: 1}
+    ).addTo(resultLayers);
+  }
+
+  // Маркеры остановок
+  L.circleMarker([pStart[1], pStart[0]], {
+    radius: 6, fillColor: r.color, color: '#fff', weight: 2, fillOpacity: 1
+  }).addTo(resultLayers).bindPopup('🚌 Посадка').openPopup();
+
+  L.circleMarker([pEnd[1], pEnd[0]], {
+    radius: 6, fillColor: r.color, color: '#fff', weight: 2, fillOpacity: 1
+  }).addTo(resultLayers).bindPopup('🚌 Выход');
+
+  // Выделение выбранного маршрута
+  ROUTES.forEach(route => route._poly.setStyle({weight: 3, opacity: 0.5}));
+  r._poly.setStyle({weight: 5, opacity: 1});
+
+  // Фокусировка на результате
+  const bounds = resultLayers.getBounds();
+  if (bounds.isValid()) map.fitBounds(bounds.pad(0.15));
+}
+
+// Кнопки
+document.getElementById('resetBtn').addEventListener('click', () => {
+  origin = dest = null;
   if (originMarker) map.removeLayer(originMarker);
   if (destMarker) map.removeLayer(destMarker);
-  originMarker=null; destMarker=null;
+  originMarker = destMarker = null;
   resultLayers.clearLayers();
-  ROUTES.forEach(r=> r._poly.setStyle({weight:4, opacity:0.7}));
-  updateInfo('Сброшено. Кликни на карту, чтобы поставить своё местоположение.');
+  ROUTES.forEach(r => r._poly.setStyle({weight: 4, opacity: 0.8}));
+  updateInfo('🔄 Сброшено<br>Кликните на карту для начала');
 });
 
-document.getElementById('fitBtn').addEventListener('click', ()=>{
-  const group = L.featureGroup(ROUTES.map(r=>r._poly));
-  map.fitBounds(group.getBounds().pad(0.5));
+document.getElementById('fitBtn').addEventListener('click', () => {
+  const group = L.featureGroup(ROUTES.map(r => r._poly));
+  const bounds = group.getBounds();
+  if (bounds.isValid()) map.fitBounds(bounds.pad(0.2));
 });
-
-updateInfo('Кликни на карту, чтобы поставить своё местоположение.');
-
 </script>
 </body>
 </html>
